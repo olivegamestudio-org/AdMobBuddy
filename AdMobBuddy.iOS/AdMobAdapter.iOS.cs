@@ -40,13 +40,13 @@ namespace AdMobBuddy.iOS
 		/// <summary>
 		/// The ad view interstitial.
 		/// </summary>
-		Interstitial AdViewInterstitial;
+		InterstitialAd AdViewInterstitial;
 
 		#endregion //Interstitials
 
 		#region Rewarded Video
 
-		RewardedVideoListener RewardedVideoListener { get; set; }
+		//RewardedVideoListener RewardedVideoListener { get; set; }
 
 		public event EventHandler<RewardedVideoEventArgs> OnVideoReward;
 
@@ -111,13 +111,13 @@ namespace AdMobBuddy.iOS
 			LoadInterstitialAd();
 
 			//Setup rewarded video and preload an ad
-			RewardedVideoListener = new RewardedVideoListener(this);
-			RewardedVideoListener.OnVideoReward += RewardedVideoListener_OnVideoReward;
-			RewardedVideoListener.OnRewardedVideoFailed += RewardedVideoListener_OnRewardedVideoFailed;
-			RewardedVideoListener.OnRewardedVideoDismissed += RewardedVideoListener_OnRewardedVideoDismissed; ;
-			RewardBasedVideoAd.SharedInstance.Delegate = RewardedVideoListener;
+			//RewardedVideoListener = new RewardedVideoListener(this);
+			//RewardedVideoListener.OnVideoReward += RewardedVideoListener_OnVideoReward;
+			//RewardedVideoListener.OnRewardedVideoFailed += RewardedVideoListener_OnRewardedVideoFailed;
+			//RewardedVideoListener.OnRewardedVideoDismissed += RewardedVideoListener_OnRewardedVideoDismissed; ;
+			//RewardBasedVideoAd.SharedInstance.Delegate = RewardedVideoListener;
 
-			LoadRewardedVideoAd();
+			//LoadRewardedVideoAd();
 		}
 
 		private void RewardedVideoListener_OnRewardedVideoDismissed(object sender, EventArgs e)
@@ -138,7 +138,7 @@ namespace AdMobBuddy.iOS
 		private void Initialized(InitializationStatus status)
 		{
 			Debug.WriteLine($"AdMob Initialized");
-		}
+		}	
 
 		#region Banner Ads
 
@@ -165,7 +165,8 @@ namespace AdMobBuddy.iOS
 
 			var viewWidth = frame.Size.Width;
 
-			return AdSizeCons.GetCurrentOrientationAnchoredAdaptiveBannerAdSize(frame.Size);
+			return new AdSize();
+			//return AdSizeCons.GetCurrentOrientationAnchoredAdaptiveBannerAdSize(frame.Size);
 		}
 
 		#endregion //Banner Ads
@@ -175,32 +176,25 @@ namespace AdMobBuddy.iOS
 		private void LoadInterstitialAd()
 		{
 			if (!string.IsNullOrEmpty(InterstitialAdID))
-			{
-				AdViewInterstitial = new Interstitial(InterstitialAdID);
-				AdViewInterstitial.AdReceived += (obj, e) =>
-				{
-					Debug.WriteLine("Interstitial ad received and ready to be displayed.");
-					OnInterstitialLoaded?.Invoke(this, new EventArgs());
-				};
-				AdViewInterstitial.ScreenDismissed += (obj, e) =>
-				{
-					Debug.WriteLine("Interstitial ad closed.");
-					OnInterstitialDismissed?.Invoke(this, EventArgs.Empty);
-					LoadInterstitialAd();
-				};
-
-				AdViewInterstitial.ReceiveAdFailed += (obj, e) =>
-				{
-					OnInterstitialFailed?.Invoke(this, EventArgs.Empty);
-					Debug.WriteLine($"Interstitial ad failed to load, error: {e.Error.DebugDescription}");
-				};
-				AdViewInterstitial.LoadRequest(Request.GetDefaultRequest());
+			{ 
+				InterstitialAd.Load(InterstitialAdID,
+					Request.GetDefaultRequest(), completionHandler);
 			}
 		}
 
-		public void DisplayInterstitialAd()
+		void completionHandler(InterstitialAd interstitialAd, NSError error)
 		{
-			if (AdViewInterstitial != null && AdViewInterstitial.IsReady && !AdViewInterstitial.HasBeenUsed)
+			if (interstitialAd != null)
+			{
+				interstitialAd.Present(ViewController);
+			}
+		}
+
+        public void DisplayInterstitialAd()
+		{
+			LoadInterstitialAd();
+
+			/*if (AdViewInterstitial != null && AdViewInterstitial.IsReady && !AdViewInterstitial.HasBeenUsed)
 			{
 				//A new ad is already prepared
 				InterstitialAdLoaded(this, new EventArgs());
@@ -211,12 +205,17 @@ namespace AdMobBuddy.iOS
 				OnInterstitialLoaded += InterstitialAdLoaded;
 
 				LoadInterstitialAd();
-			}
+			}*/
 		}
 
 		private void InterstitialAdLoaded(object sender, EventArgs e)
 		{
-			OnInterstitialLoaded -= InterstitialAdLoaded;
+			if (AdViewInterstitial != null)
+			{
+				AdViewInterstitial.Present(ViewController);
+			}
+
+			/*OnInterstitialLoaded -= InterstitialAdLoaded;
 
 			try
 			{
@@ -229,7 +228,7 @@ namespace AdMobBuddy.iOS
 			catch
 			{
 				Debug.WriteLine($"There was an error showing the ad");
-			}
+			}*/
 		}
 
 		#endregion //Interstitial Ads
@@ -240,13 +239,13 @@ namespace AdMobBuddy.iOS
 		{
 			if (!string.IsNullOrEmpty(RewardedVideoAdID))
 			{
-				RewardBasedVideoAd.SharedInstance.LoadRequest(Request.GetDefaultRequest(), RewardedVideoAdID);
+				//RewardBasedVideoAd.SharedInstance.LoadRequest(Request.GetDefaultRequest(), RewardedVideoAdID);
 			}
 		}
 
 		public void DisplayRewardedVideoAd()
 		{
-			if (RewardBasedVideoAd.SharedInstance.IsReady)
+			/*if (RewardBasedVideoAd.SharedInstance.IsReady)
 			{
 				RewardedVideoLoaded(this, new EventArgs());
 			}
@@ -256,18 +255,18 @@ namespace AdMobBuddy.iOS
 				RewardedVideoListener.OnRewardedVideoLoaded += RewardedVideoLoaded;
 
 				LoadRewardedVideoAd();
-			}
+			}*/
 		}
 
 		protected void RewardedVideoLoaded(object obj, EventArgs e)
 		{
-			RewardedVideoListener.OnRewardedVideoLoaded -= RewardedVideoLoaded;
+			/*RewardedVideoListener.OnRewardedVideoLoaded -= RewardedVideoLoaded;
 
 			if (RewardBasedVideoAd.SharedInstance.IsReady)
 			{
 				Debug.WriteLine("Reward based video ad is being displayed.");
 				InvokeOnMainThread(() => RewardBasedVideoAd.SharedInstance.Present(ViewController));
-			}
+			}*/
 		}
 
 		#endregion //Rewarded Video Ads
